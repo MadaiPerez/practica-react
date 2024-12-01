@@ -1,84 +1,126 @@
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import ModalEditProduct from '../components/modalEditProduct';
+import Swal from 'sweetalert2';
 
 const Catalog = () => {
-
-  const [data, setData] = useState([]);
+  const [dataProducts, setDataproducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [idEdit, setIdEdit] = useState(0);
 
   const apiUrl = 'http://localhost/products/api.php';
-  let config = {
+  const config = {
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  }
+      'Accept': 'application/json'
+    }
+  };
+
+  
 
   const getAllProducts = async () => {
-    const res = await axios.get(`${apiUrl}/productos`, config);
-    console.log(res);
+    try {
+      const res = await axios.get(`${apiUrl}/productos`, config);
+      setDataproducts(res.data);
+    } catch (error) {
+      console.error("Error al obtener productos:", error);
+    }
+  };
 
-    setData(res.data)
-  }
+  const openModalEdit = (id) => {
+    setIdEdit(id);
+    setShowModal(true);
+  };
+
+  const deleteProduct = (id) => {
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: "¡No podrás revertir esto!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#8B5CF6",
+      cancelButtonColor: "#EF4444",
+      confirmButtonText: "¡Sí, bórralo!"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`${apiUrl}/productos/${id}`, config);
+          Swal.fire("¡Borrado!", "El producto ha sido eliminado.", "success");
+          getAllProducts();
+        } catch (error) {
+          console.error("Error al eliminar producto:", error);
+        }
+      }
+    });
+  };
 
   useEffect(() => {
     getAllProducts();
-  }, [])
+  }, []);
+
   return (
-    <div>
-
-      <section class="text-gray-600 body-font">
-        <div className="p-4">
-
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"><Link to={'/Product'}>Agregar Producto</Link></button>
+    <section className="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen py-10">
+      <div className="container mx-auto px-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-blue-800">Catálogo de Productos</h1>
+          <Link to="/Product">
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition">
+              Agregar Producto
+            </button>
+          </Link>
         </div>
-        <div class="container px-5 py-24 mx-auto">
-          <div class="flex flex-col text-center w-full mb-20">
-            <h1 class="sm:text-3xl text-2xl font-medium title-font mb-4 text-gray-900">Master Cleanse Reliac Heirloom</h1>
-            <p class="lg:w-2/3 mx-auto leading-relaxed text-base">Whatever cardigan tote bag tumblr hexagon brooklyn asymmetrical gentrify, subway tile poke farm-to-table. Franzen you probably haven't heard of them man bun deep jianbing selfies heirloom.</p>
-          </div>
-          <div class="flex flex-wrap -m-4">
-            {data.map((item, key)=> {
-
-return (
-  <div className="lg:w-1/3 sm:w-1/2 p-4" key={key}>
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
-      <img
-        alt="gallery"
-        className="w-full h-48 object-cover object-center"
-        src="https://dummyimage.com/600x360"
-      />
-      <div className="p-4">
-        <h2 className="text-sm title-font font-medium text-indigo-500 mb-1">
-          {item.id}
-        </h2>
-        <h1 className="text-lg font-medium text-gray-900 mb-3">{item.nombre}</h1>
-        <p className="leading-relaxed mb-3">{item.descripcion}</p>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Editar
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {dataProducts.length > 0 ? (
+            dataProducts.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition"
+              >
+                <img
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTAIgDfp26G_BvrrF655Yp8GabpNcaJNkZfPQ&s"
+                  alt={item.nombre}
+                  className="w-full h-40 object-cover rounded-md mb-4"
+                />
+                <h2 className="text-lg font-semibold text-blue-700">{item.nombre}</h2>
+                <p className="text-sm text-gray-600">{item.descripcion}</p>
+                <p className="text-lg font-bold text-gray-800 mt-2">${item.precio}</p>
+                <div className="flex justify-between mt-4">
+                  <button
+                    className="text-sm text-blue-600 hover:underline"
+                    onClick={() => openModalEdit(item.id)}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="text-sm text-red-600 hover:underline"
+                    onClick={() => deleteProduct(item.id)}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center col-span-full">
+              <h2 className="text-xl font-medium text-blue-700">
+                No hay productos disponibles
+              </h2>
+              <p className="text-gray-600">Agrega productos para mostrarlos aquí.</p>
+            </div>
+          )}
+        </div>
+        {showModal && (
+          <ModalEditProduct
+            setShowModal={setShowModal}
+            idEdit={idEdit}
+            getAllProducts={getAllProducts}
+          />
+        )}
+        
       </div>
-    </div>
-  </div>
-);
-
-            })}
-
-
-
-
-          </div>
-        </div>
-
-{showModal && <ModalEditProduct setShowModal={setShowModal}/>}
-      </section>
-    </div>
-  )
-}
+    </section>
+  );
+};
 
 export default Catalog;

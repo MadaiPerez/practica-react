@@ -6,6 +6,7 @@ import Catalog from '../views/Catalog'
 import Product from '../views/Product';
 import Navbar from '../views/partials/navbar';
 import Footer from '../views/partials/footer'
+import ModalEditProduct from '../components/modalEditProduct';
 
 
 
@@ -19,7 +20,7 @@ const Router = ()=>{
                 < Route path= '/contactanos' element ={<Contact/>} />
                 < Route path= '/catalogo' element ={<Catalog/>} />
                 < Route path= '/Product' element ={<Product/>} />
-                
+                < Route path='/editar-producto' element={<ModalEditProduct />} />
                 
             </Routes>
              <Footer />
